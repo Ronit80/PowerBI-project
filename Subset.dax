@@ -1,0 +1,104 @@
+﻿/*High/Low-Value Customers Subset*/
+
+EVALUATE
+FILTER(
+    SUMMARIZE(
+        Sales,
+        Customers[IndustryType],
+        Customers[CustomerName],
+        Customers[GEO Region],
+        Customers[Country],
+        "TotalRevenue", SUM(Sales[Revenue])),[TotalRevenue] > 10000)
+ORDER BY [TotalRevenue] DESC
+
+
+
+EVALUATE
+FILTER(
+    SUMMARIZE(
+        Sales,
+        Customers[IndustryType],
+        Customers[GEO Region],
+        Customers[Country],        
+        Customers[CustomerName],
+        "TotalRevenue", SUM(Sales[Revenue])),[TotalRevenue] < 1000)
+ORDER BY [TotalRevenue] ASC
+
+/* Performing Products Subset*/
+
+
+DEFINE 
+MEASURE M_Table[Total_Qty]=sum(Sales[Quantity])
+MEASURE M_Table[Avg_UnitPrice]=average(Sales[UnitPrice])
+MEASURE M_Table[Total_Rev]=sum(Sales[Revenue])
+
+EVALUATE
+    SUMMARIZE(
+        Sales,
+        Products[DivisionName],
+        Products[ProductType],
+        Products[SegmentName],
+        Products[ProductName],
+        "UnitsSold",[Total_Qty],"Avg_Unitprice",[Avg_UnitPrice],"Revenue",[Total_Rev]) 
+        ORDER BY [Total_Rev] Desc
+        
+       
+        
+
+/*Sales Performance by Region Subset*/
+
+
+EVALUATE SUMMARIZE(Sales,Region[GEO Region],Region[Country],Customers[CustomerName],Customers[IndustryType],
+    "UnitsSold",[Total Quantity],
+    "Avg_UnitPrice",[Avg UnitPrice],    
+    "TotalRevenue", SUM(Sales[Revenue]),
+    "AverageOrderValue", AVERAGEX(RELATEDTABLE(Sales), Sales[Revenue]))
+ORDER BY [TotalRevenue] DESC
+
+/*Quarterly Sales Trends Subset*/
+
+EVALUATE
+TOPN(5,SUMMARIZECOLUMNS(
+    'Date'[Year],
+    'Date'[Quarter],
+    Customers[CustomerName],
+    Customers[IndustryType],
+    Customers[Country],
+    "UnitsSold",[Total Quantity],
+    "Avg_UnitPrice",[Avg UnitPrice],
+    "TotalSales", SUM(Sales[Revenue])),[TotalSales], DESC)
+    
+    
+/*Products with Sales Below Average*/
+/*Identify products whose sales are below the average sales across all products. 
+This can help in identifying underperforming products that may need marketing boosts or reassessment.*/
+
+
+DEFINE
+VAR AverageSales = AVERAGEX(ALL(Products), CALCULATE(SUM(Sales[Revenue])))
+EVALUATE
+FILTER(
+    ADDCOLUMNS(Products,"ProductSales", CALCULATE(SUM(Sales[Revenue])))
+    ,[ProductSales] < AverageSales)
+
+
+/*Most Profitable/Not Profitable Customers*/
+
+EVALUATE
+TOPN(5,
+SUMMARIZE(
+    Sales,
+    Customers[CustomerName],Customers[IndustryType],Customers[GEO Region],Customers[Country],
+    "TotalRevenue", SUM(Sales[Revenue])),[TotalRevenue],DESC)
+    
+
+EVALUATE
+TOPN(5,
+SUMMARIZE(
+    Sales,
+    Customers[CustomerName],Customers[IndustryType],Customers[GEO Region],Customers[Country],
+    "TotalRevenue", SUM(Sales[Revenue])),[TotalRevenue],ASC)
+    
+    
+
+
